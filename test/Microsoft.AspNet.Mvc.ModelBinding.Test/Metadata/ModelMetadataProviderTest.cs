@@ -608,9 +608,8 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
         public void IsRequired_DefaultsToFalseForReferenceType()
         {
             // Arrange
-            var attributes = new[]
+            var attributes = new object[]
             {
-                new RequiredAttribute(),
             };
 
             var provider = CreateProvider(attributes);
@@ -623,36 +622,106 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
         }
 
         [Fact]
-        public void IsRequired_WithAttribute()
-        {
-            // Arrange
-            var provider = TestModelMetadataProvider.CreateDefaultProvider();
-
-            // Act
-            var metadata = provider.GetMetadataForProperty(typeof(Person), nameof(Person.Parent));
-
-            // Assert
-            Assert.True(metadata.IsRequired);
-        }
-
-        [Fact]
-        public void IsRequired_WithDataMemberRequired()
+        public void IsRequired_WithRequiredAttribute()
         {
             // Arrange
             var provider = TestModelMetadataProvider.CreateDefaultProvider();
 
             // Act
             var metadata = provider.GetMetadataForProperty(
-                typeof(DataContractModel),
-                nameof(DataContractModel.DataMemberRequired));
+                typeof(RequiredMember),
+                nameof(RequiredMember.RequiredProperty));
 
             // Assert
             Assert.True(metadata.IsRequired);
         }
 
+        [Fact]
+        public void IsRequired_DataMemberIsRequiredTrue_SetsIsRequiredToTrue()
+        {
+            // Arrange
+            var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
+
+            // Act
+            var metadata = metadataProvider.GetMetadataForProperty(
+                typeof(ClassWithDataMemberIsRequiredTrue),
+                nameof(ClassWithDataMemberIsRequiredTrue.StringProperty));
+
+            // Assert
+            Assert.True(metadata.IsRequired);
+        }
+
+        [Fact]
+        public void IsRequired_DataMemberIsRequiredFalse_FalseForReferenceType()
+        {
+            // Arrange
+            var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
+
+            // Act
+            var metadata = metadataProvider.GetMetadataForProperty(
+                typeof(ClassWithDataMemberIsRequiredFalse),
+                nameof(ClassWithDataMemberIsRequiredFalse.StringProperty));
+
+            // Assert
+            Assert.False(metadata.IsRequired);
+        }
+
+        [Fact]
+        public void IsRequired_DataMemberIsRequiredFalse_TrueForValueType()
+        {
+            // Arrange
+            var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
+
+            // Act
+            var metadata = metadataProvider.GetMetadataForProperty(
+                typeof(ClassWithDataMemberIsRequiredFalse),
+                nameof(ClassWithDataMemberIsRequiredFalse.IntProperty));
+
+            // Assert
+            Assert.True(metadata.IsRequired);
+        }
+
+        [Fact]
+        public void IsRequired_DataMemberIsRequiredTrueWithoutDataContract_False()
+        {
+            // Arrange
+            var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
+
+            // Act
+            var metadata = metadataProvider.GetMetadataForProperty(
+                typeof(ClassWithDataMemberIsRequiredTrueWithoutDataContract),
+                nameof(ClassWithDataMemberIsRequiredTrueWithoutDataContract.StringProperty));
+
+            // Assert
+            Assert.False(metadata.IsRequired);
+        }
+
         private IModelMetadataProvider CreateProvider(params object[] attributes)
         {
             return new AttributeInjectModelMetadataProvider(attributes);
+        }
+
+        [DataContract]
+        private class ClassWithDataMemberIsRequiredTrue
+        {
+            [DataMember(IsRequired = true)]
+            public string StringProperty { get; set; }
+        }
+
+        [DataContract]
+        private class ClassWithDataMemberIsRequiredFalse
+        {
+            [DataMember(IsRequired = false)]
+            public string StringProperty { get; set; }
+
+            [DataMember(IsRequired = false)]
+            public int IntProperty { get; set; }
+        }
+
+        private class ClassWithDataMemberIsRequiredTrueWithoutDataContract
+        {
+            [DataMember(IsRequired = true)]
+            public string StringProperty { get; set; }
         }
 
         private class TestBinderTypeProvider : IBinderTypeProviderMetadata
@@ -749,11 +818,10 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
             public int NotIncludedOrExcluded { get; set; }
         }
 
-        [DataContract]
-        private class DataContractModel
+        private class RequiredMember
         {
-            [DataMember(IsRequired = true)]
-            public int? DataMemberRequired { get; set; }
+            [Required]
+            public string RequiredProperty { get; set; }
         }
 
         private class AttributeInjectModelMetadataProvider : DefaultModelMetadataProvider

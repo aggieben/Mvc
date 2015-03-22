@@ -110,7 +110,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
         }
 
         [Fact]
-        public void GetDisplayDetails_EditableAttribute_SetsReadOnly()
+        public void GetDisplayDetails_EditableAttributeFalse_SetsReadOnlyTrue()
         {
             // Arrange
             var provider = new DataAnnotationsMetadataProvider();
@@ -125,7 +125,26 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
             provider.GetBindingMetadata(context);
 
             // Assert
-            Assert.Equal(true, context.BindingMetadata.IsReadOnly);
+            Assert.True(context.BindingMetadata.IsReadOnly);
+        }
+
+        [Fact]
+        public void GetDisplayDetails_EditableAttributeTrue_SetsReadOnlyFalse()
+        {
+            // Arrange
+            var provider = new DataAnnotationsMetadataProvider();
+
+            var editable = new EditableAttribute(allowEdit: true);
+
+            var attributes = new Attribute[] { editable };
+            var key = ModelMetadataIdentity.ForType(typeof(string));
+            var context = new BindingMetadataProviderContext(key, attributes);
+
+            // Act
+            provider.GetBindingMetadata(context);
+
+            // Assert
+            Assert.False(context.BindingMetadata.IsReadOnly);
         }
 
         [Fact]
@@ -562,7 +581,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
         [InlineData(true)]
         [InlineData(false)]
         [InlineData(null)]
-        public void GetBindingDetails_NoRequiredAttribute_IsRequiredLeftAlone(bool? value)
+        public void GetBindingDetails_NoRequiredAttribute_IsRequiredLeftAlone(bool? initialValue)
         {
             // Arrange
             var provider = new DataAnnotationsMetadataProvider();
@@ -570,13 +589,34 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
             var attributes = new Attribute[] { };
             var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
             var context = new BindingMetadataProviderContext(key, attributes);
-            context.BindingMetadata.IsRequired = value;
+            context.BindingMetadata.IsRequired = initialValue;
 
             // Act
             provider.GetBindingMetadata(context);
 
             // Assert
-            Assert.Equal(value, context.BindingMetadata.IsRequired);
+            Assert.Equal(initialValue, context.BindingMetadata.IsRequired);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        [InlineData(null)]
+        public void GetBindingDetails_NoEditableAttribute_IsReadOnlyLeftAlone(bool? initialValue)
+        {
+            // Arrange
+            var provider = new DataAnnotationsMetadataProvider();
+
+            var attributes = new Attribute[] { };
+            var key = ModelMetadataIdentity.ForProperty(typeof(int), "Length", typeof(string));
+            var context = new BindingMetadataProviderContext(key, attributes);
+            context.BindingMetadata.IsReadOnly = initialValue;
+
+            // Act
+            provider.GetBindingMetadata(context);
+
+            // Assert
+            Assert.Equal(initialValue, context.BindingMetadata.IsReadOnly);
         }
 
         private class EmptyClass
