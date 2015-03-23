@@ -15,6 +15,10 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
         {
             // Arrange
             var filter = new SimpleTypesExcludeFilter();
+            if (type == typeof(int[]))
+            {
+                //System.Diagnostics.Debugger.Launch();
+            }
 
             // Act & Assert
             Assert.True(filter.IsTypeExcluded(type));
@@ -43,24 +47,14 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
                 return new TheoryData<Type>()
                 {
                     // Simple types
-                    typeof(int[]),
                     typeof(int),
-                    typeof(List<decimal>),
-                    typeof(SortedSet<int>),
+                    typeof(DateTime),
 
                     // Nullable types
-                    typeof(ICollection<string>),
-                    typeof(int?[]),
-                    typeof(SortedSet<int?>),
-                    typeof(HashSet<Uri>),
-                    typeof(HashSet<string>),
-
-                    // Value types
-                    typeof(IList<DateTime>),
+                    typeof(int?),
 
                     // KeyValue types
-                    typeof(Dictionary<int, string>),
-                    typeof(IReadOnlyDictionary<int?, char>)
+                    typeof(KeyValuePair<string, string>)
                 };
             }
         }
@@ -71,12 +65,27 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             {
                 return new TheoryData<Type>()
                 {
+                    // Enumerable types
+                    typeof(int[]),
+                    typeof(List<decimal>),
+                    typeof(SortedSet<int>),
+                    typeof(ICollection<string>),
+                    typeof(int?[]),
+                    typeof(SortedSet<int?>),
+                    typeof(HashSet<Uri>),
+                    typeof(HashSet<string>),
+                    typeof(IList<DateTime>),
+                    typeof(Dictionary<int, string>),
+                    typeof(IReadOnlyDictionary<int?, char>),
+                    
+                    // Complex types
                     typeof(TestType),
                     typeof(TestType[]),
                     typeof(SortedSet<TestType>),
                     typeof(Dictionary<int, TestType>),
                     typeof(Dictionary<TestType, int>),
-                    typeof(Dictionary<TestType, TestType>)
+                    typeof(Dictionary<TestType, TestType>),
+                    typeof(KeyValuePair<string, TestType>)
                 };
             }
         }
