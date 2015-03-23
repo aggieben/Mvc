@@ -472,9 +472,51 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             validator.Validate(validationContext);
 
             // Assert
+            Assert.True(validationContext.ModelState.IsValid);
             var modelState = validationContext.ModelState["serviceProvider.TestService"];
             Assert.Empty(modelState.Errors);
             Assert.Equal(modelState.ValidationState, ModelValidationState.Skipped);
+        }
+
+        [Fact]
+        public void EnumerableType_ValidatedSuccessfully()
+        {
+            // Arrange
+            var modelStateDictionary = new ModelStateDictionary();
+            modelStateDictionary.Add("items[0]", new ModelState());
+            modelStateDictionary.Add("items[1]", new ModelState());
+            modelStateDictionary.Add("items[2]", new ModelState());
+
+            var testValidationContext = GetModelValidationContext(
+                new string[] { "Foo", "Bar", "Baz" },
+                typeof(string[]),
+                "items",
+                excludedTypes: null,
+                modelStateDictionary: modelStateDictionary);
+
+            var excludedValidationTypesPredicate = new List<IExcludeTypeValidationFilter>();
+            excludedValidationTypesPredicate.Add(new SimpleTypesExcludeFilter());
+
+            var mockValidationExcludeFiltersProvider = new Mock<IValidationExcludeFiltersProvider>();
+            mockValidationExcludeFiltersProvider
+                .SetupGet(o => o.ExcludeFilters)
+                .Returns(excludedValidationTypesPredicate);
+            testValidationContext.ExcludeFiltersProvider = mockValidationExcludeFiltersProvider.Object;
+
+            var validationContext = testValidationContext.ModelValidationContext;
+
+            var validator = new DefaultObjectValidator(
+                testValidationContext.ExcludeFiltersProvider,
+                testValidationContext.ModelMetadataProvider);
+
+            // Act
+            validator.Validate(validationContext);
+
+            // Assert
+            Assert.True(validationContext.ModelState.IsValid);
+            var modelState = validationContext.ModelState["items"];
+            Assert.Empty(modelState.Errors);
+            Assert.Equal(modelState.ValidationState, ModelValidationState.Valid);
         }
 
         private TestModelValidationContext GetModelValidationContext(
@@ -483,8 +525,16 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             string key = "",
             List<Type> excludedTypes = null)
         {
-            var modelStateDictionary = new ModelStateDictionary();
+            return GetModelValidationContext(model, type, key, excludedTypes, new ModelStateDictionary());
+        }
 
+        private TestModelValidationContext GetModelValidationContext(
+            object model,
+            Type type,
+            string key,
+            List<Type> excludedTypes,
+            ModelStateDictionary modelStateDictionary)
+        {
             var modelMetadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
 
             var excludedValidationTypesPredicate = new List<IExcludeTypeValidationFilter>();
